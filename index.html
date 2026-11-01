@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datapack Studio — Генератор датапаков Minecraft</title>
+    <meta name="description" content="Datapack Studio — онлайн генератор датапаков для Minecraft на базе ИИ. Создавай кастомные механики, рецепты и идеи без регистрации." />
+    <meta name="keywords" content="Datapack Studio, датапак студио, генератор датапаков, датапаки майнкрафт" />
+    <meta name="author" content="Koton" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: VT323 (Minecraft Font), JetBrains Mono, Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- JSZip Library for packaging zip in browser -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            image-rendering: pixelated;
+        }
+        .pixel-font {
+            font-family: 'VT323', monospace;
+            letter-spacing: 0.5px;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Minecraft Classic Double Border (Dark Theme) */
+        .mc-panel {
+            background-color: #2b2b2b;
+            border: 4px solid;
+            border-top-color: #4a4a4a;
+            border-left-color: #4a4a4a;
+            border-right-color: #151515;
+            border-bottom-color: #151515;
+            box-shadow: inset -4px -4px 0px #1c1c1c, inset 4px 4px 0px #3d3d3d;
+        }
+
+        .mc-input {
+            background-color: #0f0f0f;
+            border: 4px solid;
+            border-top-color: #262626;
+            border-left-color: #262626;
+            border-right-color: #555555;
+            border-bottom-color: #555555;
+            color: #e0e0e0;
+        }
+        .mc-input:focus {
+            border-top-color: #4a6fa5;
+            border-left-color: #4a6fa5;
+            border-right-color: #7995cb;
+            border-bottom-color: #7995cb;
+            outline: none;
+        }
+        .mc-input.error-glow {
+            border-top-color: #a54a4a;
+            border-left-color: #a54a4a;
+            border-right-color: #cb7979;
+            border-bottom-color: #cb7979;
+            box-shadow: 0 0 10px rgba(255, 50, 50, 0.3);
+        }
+
+        /* Classic Minecraft Buttons */
+        .mc-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid;
+            text-shadow: 2px 2px 0px #1a1a1a;
+            transition: all 0.05s ease;
+            cursor: pointer;
+            user-select: none;
+            image-rendering: pixelated;
+        }
+        
+        .mc-btn-gray {
+            background-color: #4c4c4c;
+            border-top-color: #7a7a7a;
+            border-left-color: #7a7a7a;
+            border-right-color: #1f1f1f;
+            border-bottom-color: #1f1f1f;
+            color: #e0e0e0;
+        }
+        .mc-btn-gray:hover:not(:disabled) {
+            background-color: #5c5c5c;
+            border-top-color: #8c8c8c;
+            border-left-color: #8c8c8c;
+            border-right-color: #2c2c2c;
+            border-bottom-color: #2c2c2c;
+            color: #ffffff;
+        }
+        .mc-btn-gray:active:not(:disabled) {
+            background-color: #3c3c3c;
+            border-top-color: #1f1f1f;
+            border-left-color: #1f1f1f;
+            border-right-color: #7a7a7a;
+            border-bottom-color: #7a7a7a;
+            padding-top: 6px;
+            padding-bottom: 2px;
+        }
+
+        .mc-btn-green {
+            background-color: #3c8527;
+            border-top-color: #5da83b;
+            border-left-color: #5da83b;
+            border-right-color: #1d4d12;
+            border-bottom-color: #1d4d12;
+            color: #e0f2f1;
+        }
+        .mc-btn-green:hover:not(:disabled) {
+            background-color: #49a130;
+            border-top-color: #6ebc4c;
+            border-left-color: #6ebc4c;
+            border-right-color: #245e17;
+            border-bottom-color: #245e17;
+            color: #ffffff;
+        }
+        .mc-btn-green:active:not(:disabled) {
+            background-color: #2c641c;
+            border-top-color: #1d4d12;
+            border-left-color: #1d4d12;
+            border-right-color: #5da83b;
+            border-bottom-color: #5da83b;
+            padding-top: 6px;
+            padding-bottom: 2px;
+        }
+
+        .mc-btn-amber {
+            background-color: #c27a1f;
+            border-top-color: #e29c3d;
+            border-left-color: #e29c3d;
+            border-right-color: #724409;
+            border-bottom-color: #724409;
+            color: #fff8e1;
+        }
+        .mc-btn-amber:hover:not(:disabled) {
+            background-color: #d98f2b;
+            border-top-color: #fcae4c;
+            border-left-color: #fcae4c;
+            border-right-color: #8a530f;
+            border-bottom-color: #8a530f;
+            color: #ffffff;
+        }
+        .mc-btn-amber:active:not(:disabled) {
+            background-color: #9c6016;
+            border-top-color: #724409;
+            border-left-color: #724409;
+            border-right-color: #e29c3d;
+            border-bottom-color: #e29c3d;
+            padding-top: 6px;
+            padding-bottom: 2px;
+        }
+
+        .mc-btn-red {
+            background-color: #a32d2d;
+            border-top-color: #c94747;
+            border-left-color: #c94747;
+            border-right-color: #611818;
+            border-bottom-color: #611818;
+            color: #ffebee;
+        }
+        .mc-btn-red:hover:not(:disabled) {
+            background-color: #bd3a3a;
+            border-top-color: #db5c5c;
+            border-left-color: #db5c5c;
+            border-right-color: #732222;
+            border-bottom-color: #732222;
+        }
+        .mc-btn-red:active:not(:disabled) {
+            background-color: #852121;
+            border-top-color: #611818;
+            border-left-color: #611818;
+            border-right-color: #c94747;
+            border-bottom-color: #c94747;
+            padding-top: 6px;
+            padding-bottom: 2px;
+        }
+
+        .mc-btn:disabled {
+            background-color: #242424 !important;
+            border-top-color: #3a3a3a !important;
+            border-left-color: #3a3a3a !important;
+            border-right-color: #141414 !important;
+            border-bottom-color: #141414 !important;
+            color: #666666 !important;
+            text-shadow: none !important;
+            cursor: not-allowed;
+        }
+
+        .mc-slot-item {
+            width: 32px;
+            height: 32px;
+            background-image: radial-gradient(#6c6c6c 20%, #444 80%);
+            border: 2px solid #1c1c1c;
+            box-shadow: inset -2px -2px 0 #333, inset 2px 2px 0 #8c8c8c;
+        }
+
+        ::-webkit-scrollbar {
+            width: 14px;
+            height: 14px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111;
+            border-left: 3px solid #333;
+            border-top: 3px solid #333;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border: 3px solid #111;
+            box-shadow: inset 1px 1px 0px #666;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
+        #code-editor {
+            height: 100% !important;
+            width: 100% !important;
+            flex-grow: 1 !important;
+            min-height: 400px !important;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body class="bg-[#121212] text-gray-200 min-h-screen flex flex-col overflow-y-auto">
+
+    <!-- Шапка приложения -->
+    <header class="bg-[#242424] border-b-4 border-b-[#121212] px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+        <div class="flex items-center gap-4">
+            <div class="mc-panel p-2 flex items-center justify-center bg-[#4a4a4a] select-none">
+                <i class="fa-solid fa-code text-2xl text-gray-300 drop-shadow-[2px_2px_0px_#111]"></i>
+            </div>
+            <div>
+                <h1 class="pixel-font text-3xl text-gray-100 drop-shadow-[2px_2px_0px_#111] leading-none uppercase select-none">
+                    Datapack Studio 1.0.0
+                </h1>
+                <p class="pixel-font text-lg text-gray-400 mt-1 leading-none select-none">
+                    Среда разработки пакетов данных (Format: 48)
+                </p>
+            </div>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-4">
+            <!-- Кнопка Поддержать в шапке -->
+            <button onclick="openDonateModal()" class="mc-btn mc-btn-amber px-3 py-1.5 pixel-font text-lg uppercase select-none flex items-center gap-2">
+                <i class="fa-solid fa-coins text-yellow-300"></i> Поддержать автора
+            </button>
+
+            <div class="mc-panel bg-[#1a1a1a] px-4 py-2 flex items-center gap-3 select-none">
+                <span class="relative flex h-3 w-3">
+                    <span id="engine-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span id="engine-dot" class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span class="pixel-font text-lg text-emerald-400 drop-shadow-[1px_1px_0px_#111] uppercase" id="ai-status-text">
+                    Движок: Активен
+                </span>
+            </div>
+            
+            <details id="settings-details" class="relative">
+                <summary class="list-none cursor-pointer text-gray-400 hover:text-white transition pixel-font text-lg flex items-center gap-1.5 bg-[#2a2a2a] px-3 py-1.5 border-2 border-[#151515] hover:border-[#4a4a4a] select-none">
+                    <i class="fa-solid fa-gears"></i> Опции API
+                </summary>
+                <div class="absolute right-0 mt-2 w-80 mc-panel p-4 z-50 text-xs">
+                    <p class="pixel-font text-lg text-gray-200 mb-1 uppercase">API Key Конфигурация</p>
+                    <p class="text-gray-400 mb-3 leading-relaxed">Встроенный ключ среды может быть недоступен (Ошибка 401). Для автономной работы укажите свой ключ Google Gemini API.</p>
+                    <input type="password" id="api-key-input" placeholder="AIzaSy..." class="w-full mc-input px-3 py-2 text-sm font-mono focus:border-indigo-500 mb-2 transition-colors duration-300">
+                    <p class="text-[10px] text-gray-500">Сохраняется только локально в вашем браузере.</p>
+                </div>
+            </details>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-visible min-h-0">
+        
+        <!-- Левая колонка: Описание и настройки -->
+        <section class="w-full lg:w-96 border-b-4 lg:border-b-0 lg:border-r-4 border-[#121212] bg-[#1a1a1a] flex flex-col shrink-0 p-4 space-y-4 overflow-y-visible">
+            
+            <!-- Конфигурация -->
+            <div class="mc-panel p-4 space-y-4">
+                <div class="flex items-center gap-2 select-none">
+                    <div class="mc-slot-item flex items-center justify-center rounded">
+                        <i class="fa-solid fa-layer-group text-blue-400 text-sm"></i>
+                    </div>
+                    <h2 class="pixel-font text-2xl text-gray-200 uppercase drop-shadow-[1px_1px_0px_#111]">Параметры</h2>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block pixel-font text-base text-gray-400 uppercase mb-1 select-none">Пространство имен</label>
+                        <input type="text" id="namespace-input" value="custom_pack" class="w-full mc-input px-2 py-1.5 text-xs font-mono">
+                    </div>
+                    <div>
+                        <label class="block pixel-font text-base text-gray-400 uppercase mb-1 select-none">Версия игры</label>
+                        <input type="text" value="1.21 (fmt 48)" disabled class="w-full mc-input px-2 py-1.5 text-xs font-mono text-gray-500 bg-[#050505]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block pixel-font text-base text-gray-400 uppercase mb-1 select-none">Описание (mcmeta)</label>
+                    <input type="text" id="pack-desc-input" value="Datapack generated Datapack Studio" class="w-full mc-input px-2.5 py-1.5 text-xs">
+                </div>
+            </div>
+
+            <!-- ТЗ -->
+            <div class="mc-panel p-4 space-y-4 flex-1 flex flex-col">
+                <div class="flex items-center gap-2 select-none shrink-0">
+                    <div class="mc-slot-item flex items-center justify-center rounded">
+                        <i class="fa-solid fa-terminal text-gray-300 text-sm"></i>
+                    </div>
+                    <h2 class="pixel-font text-2xl text-gray-200 uppercase drop-shadow-[1px_1px_0px_#111]">Конфигурация логики</h2>
+                </div>
+
+                <div class="flex-1 flex flex-col relative">
+                    <textarea id="prompt-input" placeholder="Опишите желаемую механику...&#10;Пример: Меч, который при ударе призывает молнию в врага и дает игроку скорость." class="w-full flex-1 min-h-[120px] mc-input p-3 text-xs leading-relaxed resize-none font-mono"></textarea>
+                </div>
+            </div>
+
+            <!-- Панель доработки (Скрыта по умолчанию) -->
+            <div id="correction-panel" class="mc-panel p-4 space-y-3 hidden bg-[#262621]">
+                <div class="flex items-center gap-2 select-none">
+                    <div class="mc-slot-item flex items-center justify-center rounded border-orange-900 bg-[#1c140a]">
+                        <i class="fa-solid fa-code-merge text-orange-400 text-sm"></i>
+                    </div>
+                    <h2 class="pixel-font text-xl text-orange-400 uppercase drop-shadow-[1px_1px_0px_#111]">Отладка / Доработка</h2>
+                </div>
+                
+                <textarea id="correction-input" placeholder="Укажите, что нужно исправить...&#10;Пример: Сделай так, чтобы молния бьет только в враждебных мобов, а не во всех." class="w-full h-20 mc-input p-2.5 text-xs leading-relaxed resize-none font-mono border-orange-900/50"></textarea>
+
+                <button id="refine-btn" class="mc-btn mc-btn-amber w-full py-2.5 pixel-font text-lg uppercase select-none">
+                    <i class="fa-solid fa-wrench mr-2"></i> Применить изменения
+                </button>
+            </div>
+
+            <!-- Кнопки управления -->
+            <div class="space-y-3 pt-2 shrink-0">
+                <button id="generate-btn" class="mc-btn mc-btn-green w-full py-3.5 pixel-font text-xl uppercase shadow-lg select-none">
+                    <i class="fa-solid fa-play mr-2"></i> Сгенерировать проект
+                </button>
+
+                <button id="random-idea-btn" class="mc-btn mc-btn-amber w-full py-2.5 pixel-font text-lg uppercase shadow-lg select-none">
+                    <i class="fa-solid fa-dice mr-2"></i> Сгенерировать идеи
+                </button>
+
+                <button id="reset-project-btn" class="mc-btn mc-btn-red w-full py-2 pixel-font text-lg uppercase hidden select-none">
+                    <i class="fa-solid fa-trash-can mr-2"></i> Очистить рабочую среду
+                </button>
+            </div>
+
+        </section>
+
+        <!-- Центральная/Правая колонка -->
+        <section class="flex-1 flex flex-col bg-[#121212] overflow-y-visible lg:overflow-visible">
+            
+            <div class="bg-[#242424] border-b-4 border-b-[#121212] px-4 py-3 flex flex-col sm:flex-row gap-3 justify-between items-center shrink-0 select-none">
+                <div class="flex items-center text-xs font-mono text-gray-300 w-full sm:w-auto">
+                    <span id="current-file-path" class="text-gray-300 mc-input px-3 py-1 rounded bg-[#0a0a0a] border-[#333] truncate max-w-xs md:max-w-md">Рабочая область не инициализирована</span>
+                    <span id="autosave-badge" class="ml-3 text-xs text-green-400 pixel-font uppercase drop-shadow-[1px_1px_0px_#111] shrink-0 hidden">
+                        <i class="fa-solid fa-check mr-1"></i> Сохранено
+                    </span>
+                </div>
+                <div class="flex gap-3 w-full sm:w-auto justify-end">
+                    <button id="instruction-btn" class="mc-btn mc-btn-gray px-4 py-2 pixel-font text-lg uppercase" disabled>
+                        <i class="fa-solid fa-[#scroll] mr-2"></i> Инструкция
+                    </button>
+                    <button id="check-btn" class="mc-btn mc-btn-gray px-4 py-2 pixel-font text-lg uppercase" disabled>
+                        <i class="fa-solid fa-magnifying-glass mr-2"></i> Анализ кода
+                    </button>
+                    <button id="export-btn" class="mc-btn mc-btn-gray px-4 py-2 pixel-font text-lg uppercase" disabled>
+                        <i class="fa-solid fa-download mr-2"></i> Экспорт .ZIP
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex-1 flex flex-col sm:flex-row overflow-y-visible lg:overflow-visible">
+                <!-- Проводник -->
+                <div class="w-full sm:w-64 bg-[#1b1b1b] border-b-4 sm:border-b-0 sm:border-r-4 border-[#121212] flex flex-col shrink-0 overflow-y-visible min-h-[200px]">
+                    <div class="p-3 border-b-2 border-b-[#2c2c2c] bg-[#1e1e1e] flex justify-between items-center select-none">
+                        <span class="pixel-font text-xl text-gray-300 uppercase">Проводник</span>
+                        <i class="fa-solid fa-folder-tree text-gray-500 text-sm"></i>
+                    </div>
+                    <div id="file-tree" class="p-2 text-xs font-mono space-y-0.5 text-gray-300">
+                        <p class="text-gray-500 italic p-4 text-center pixel-font text-lg leading-relaxed select-none">
+                            Проект пуст. Запустите генерацию.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Редактор -->
+                <div class="flex-1 bg-[#0f0f0f] flex flex-col relative overflow-visible min-h-[400px]">
+                    <div id="editor-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-[#0f0f0f] z-10 select-none">
+                        <i class="fa-solid fa-code text-5xl text-[#222] mb-3"></i>
+                        <h3 class="pixel-font text-2xl text-gray-500 uppercase drop-shadow-[1px_1px_0px_#111] mb-1">Редактор отключен</h3>
+                        <p class="text-xs text-gray-600 max-w-xs leading-relaxed">
+                            Выберите файл в проводнике для просмотра исходного кода.
+                        </p>
+                    </div>
+                    <textarea id="code-editor" class="w-full flex-1 bg-[#0a0a0a] text-gray-300 p-6 font-mono text-sm border-0 focus:outline-none focus:ring-0 leading-relaxed hidden" spellcheck="false" placeholder="# Исходный код..."></textarea>
+                </div>
+            </div>
+
+            <!-- Консоль -->
+            <div class="h-48 border-t-4 border-t-[#121212] bg-[#0c0c0c] flex flex-col shrink-0 overflow-hidden">
+                <div class="bg-[#181818] border-b-2 border-b-[#222] px-4 py-2 flex justify-between items-center select-none">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-terminal text-gray-500 text-xs"></i>
+                        <span class="pixel-font text-lg text-gray-400 uppercase drop-shadow-[1px_1px_0px_#111]">
+                            Консоль сборки
+                        </span>
+                    </div>
+                    <button onclick="clearTerminal()" class="mc-btn mc-btn-gray px-3 py-1 text-xs pixel-font uppercase">
+                        <i class="fa-solid fa-eraser mr-1.5"></i> Очистить
+                    </button>
+                </div>
+                <div id="terminal-logs" class="flex-1 p-3 font-mono text-xs overflow-y-auto space-y-1.5 bg-[#080808]">
+                    <div class="text-gray-500">[System] Инициализация среды Datapack Studio...</div>
+                    <div class="text-gray-500">[System] Целевая платформа: Minecraft Java 1.21 (pack_format: 48)</div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Экран загрузки -->
+    <div id="loading-screen" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center transition-all duration-300 hidden select-none">
+        <div class="text-center relative mc-panel p-8 max-w-md bg-[#222] mx-4 border-[#333]">
+            <div class="inline-block relative mb-6">
+                <div class="absolute inset-0 bg-gray-500/10 blur-xl rounded-full scale-125 animate-pulse"></div>
+                <div class="relative bg-[#2a2a2a] border-4 border-[#444] p-5 rounded">
+                    <i class="fa-solid fa-microchip text-4xl text-gray-300 drop-shadow-[2px_2px_0px_#111]"></i>
+                </div>
+            </div>
+            
+            <h2 id="loading-text" class="pixel-font text-3xl text-gray-200 drop-shadow-[2px_2px_0px_#111] uppercase mb-2">Компиляция...</h2>
+            <p id="loading-subtext" class="text-xs text-gray-500 leading-relaxed font-mono">
+                Генерация структуры файлов и проверка синтаксиса
+            </p>
+            
+            <div class="w-full h-3 bg-[#111] border-2 border-[#333] mt-6 p-0.5 relative overflow-hidden">
+                <div class="h-full bg-gray-400 animate-pulse" style="width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно Аудита -->
+    <div id="audit-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center transition-all duration-300 hidden">
+        <div class="mc-panel p-6 max-w-2xl w-full mx-4 bg-[#2e2e2e] flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between border-b-4 border-[#121212] pb-3 mb-4 shrink-0 select-none">
+                <div class="flex items-center gap-2">
+                    <div class="mc-slot-item flex items-center justify-center rounded">
+                        <i class="fa-solid fa-list-check text-gray-300"></i>
+                    </div>
+                    <h3 class="pixel-font text-3xl text-gray-200 drop-shadow-[2px_2px_0px_#111] uppercase">Отчет анализатора</h3>
+                </div>
+                <button onclick="closeAuditModal()" class="mc-btn mc-btn-gray w-8 h-8 flex items-center justify-center p-0">
+                    <span class="pixel-font text-lg font-bold">X</span>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto pr-2 space-y-4">
+                <div id="audit-status-banner" class="p-3 border-4 border-[#151515] rounded text-center select-none">
+                    <span id="audit-status-title" class="pixel-font text-2xl uppercase font-bold drop-shadow-[1px_1px_0px_#111]"></span>
+                </div>
+
+                <div>
+                    <h4 class="pixel-font text-xl text-gray-400 uppercase mb-1 select-none">Журнал:</h4>
+                    <div id="audit-report-text" class="bg-[#0f0f0f] border-4 border-[#262626] p-4 text-xs font-mono rounded leading-relaxed text-gray-300 whitespace-pre-line max-h-48 overflow-y-auto"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="pixel-font text-xl text-red-400 uppercase mb-1 select-none">Ошибки синтаксиса:</h4>
+                        <ul id="audit-errors-list" class="bg-[#0f0f0f] border-4 border-[#262626] p-3 rounded text-xs text-gray-400 space-y-1 max-h-36 overflow-y-auto font-mono list-disc list-inside"></ul>
+                    </div>
+                    <div>
+                        <h4 class="pixel-font text-xl text-emerald-400 uppercase mb-1 select-none">Примененные патчи:</h4>
+                        <ul id="audit-fixes-list" class="bg-[#0f0f0f] border-4 border-[#262626] p-3 rounded text-xs text-gray-400 space-y-1 max-h-36 overflow-y-auto font-mono list-disc list-inside"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 mt-4 border-t-4 border-[#121212] flex justify-end shrink-0 select-none">
+                <button onclick="closeAuditModal()" class="mc-btn mc-btn-green px-6 py-2.5 pixel-font text-xl uppercase">
+                    Закрыть отчет
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно Идей -->
+    <div id="idea-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center transition-all duration-300 hidden">
+        <div class="mc-panel p-6 max-w-lg w-full mx-4 bg-[#2e2e2e] flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between border-b-4 border-[#121212] pb-3 mb-4 shrink-0 select-none">
+                <div class="flex items-center gap-2">
+                    <div class="mc-slot-item flex items-center justify-center rounded border-amber-900 bg-[#1c140a]">
+                        <i class="fa-solid fa-lightbulb text-amber-400"></i>
+                    </div>
+                    <h3 class="pixel-font text-3xl text-amber-400 drop-shadow-[2px_2px_0px_#111] uppercase">Генератор идей</h3>
+                </div>
+                <button onclick="closeIdeaModal()" class="mc-btn mc-btn-gray w-8 h-8 flex items-center justify-center p-0">
+                    <span class="pixel-font text-lg font-bold">X</span>
+                </button>
+            </div>
+            
+            <p class="text-xs text-gray-400 mb-3 font-mono">Случайные реалистичные идеи датапаков. Отметьте понравившиеся для генерации:</p>
+            
+            <div id="ideas-list" class="flex-1 overflow-y-auto pr-2 space-y-2 mb-4">
+                <!-- Сюда вставляются идеи -->
+            </div>
+
+            <div class="pt-4 mt-2 border-t-4 border-[#121212] flex justify-end shrink-0 select-none">
+                <button id="apply-ideas-btn" class="mc-btn mc-btn-amber px-6 py-2.5 pixel-font text-xl uppercase w-full">
+                    Выбрать и продолжить
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно Инструкции (Гайд) -->
+    <div id="guide-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center transition-all duration-300 hidden">
+        <div class="mc-panel p-6 max-w-2xl w-full mx-4 bg-[#2e2e2e] flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between border-b-4 border-[#121212] pb-3 mb-4 shrink-0 select-none">
+                <div class="flex items-center gap-2">
+                    <div class="mc-slot-item flex items-center justify-center rounded border-blue-900 bg-[#0a141c]">
+                        <i class="fa-solid fa-scroll text-blue-400"></i>
+                    </div>
+                    <h3 class="pixel-font text-3xl text-blue-400 drop-shadow-[2px_2px_0px_#111] uppercase">Инструкция по датапаку</h3>
+                </div>
+                <button onclick="closeGuideModal()" class="mc-btn mc-btn-gray w-8 h-8 flex items-center justify-center p-0">
+                    <span class="pixel-font text-lg font-bold">X</span>
+                </button>
+            </div>
+            
+            <div id="guide-content" class="flex-1 overflow-y-auto pr-2 text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-line bg-[#0f0f0f] border-4 border-[#262626] p-4 rounded">
+                <!-- Гайд -->
+            </div>
+
+            <div class="pt-4 mt-4 border-t-4 border-[#121212] flex justify-end shrink-0 select-none">
+                <button onclick="closeGuideModal()" class="mc-btn mc-btn-green px-6 py-2.5 pixel-font text-xl uppercase">
+                    Понятно
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно Доната -->
+    <div id="donate-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center transition-all duration-300 hidden">
+        <div class="mc-panel p-6 max-w-xl w-full mx-4 bg-[#2e2e2e] flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between border-b-4 border-[#121212] pb-3 mb-4 shrink-0 select-none">
+                <div class="flex items-center gap-2">
+                    <div class="mc-slot-item flex items-center justify-center rounded border-amber-900 bg-[#1c140a]">
+                        <i class="fa-solid fa-coins text-amber-400"></i>
+                    </div>
+                    <h3 class="pixel-font text-3xl text-amber-400 drop-shadow-[2px_2px_0px_#111] uppercase" id="donate-title">Поддержать проект</h3>
+                </div>
+                <button onclick="closeDonateModal()" class="mc-btn mc-btn-gray w-8 h-8 flex items-center justify-center p-0">
+                    <span class="pixel-font text-lg font-bold">X</span>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto pr-2 space-y-4 font-mono text-xs text-gray-300">
+                <p class="text-gray-400 leading-relaxed" id="donate-desc">
+                    Проект развивается бесплатно. Если генератор сэкономил время и помог создать датапак, вы можете поддержать автора.
+                </p>
+
+                <!-- USDT TRC-20 -->
+                <div class="bg-[#151515] border-2 border-[#333] p-3 rounded space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="pixel-font text-lg text-emerald-400 uppercase">USDT (Сеть TRC-20)</span>
+                    </div>
+                    <div class="bg-[#0a0a0a] border border-[#262626] p-2 text-[11px] text-gray-200 break-all select-all font-mono" id="usdt-addr">
+                        TWcfqmXx3ze97xheezndAX3PVD6gZnzERU
+                    </div>
+                    <button onclick="copyToClipboard('TWcfqmXx3ze97xheezndAX3PVD6gZnzERU', 'Адрес USDT')" class="mc-btn mc-btn-gray w-full py-1.5 pixel-font text-base uppercase">
+                        Скопировать адрес
+                    </button>
+                </div>
+
+                <!-- TON -->
+                <div class="bg-[#151515] border-2 border-[#333] p-3 rounded space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="pixel-font text-lg text-blue-400 uppercase">TON (Сеть TON)</span>
+                    </div>
+                    <div class="bg-[#0a0a0a] border border-[#262626] p-2 text-[11px] text-gray-200 break-all select-all font-mono" id="ton-addr">
+                        UQAk0ygEIDAdflY2pUuNAgw9aWv_EqRLRkXZGAmm2qthS1Nv
+                    </div>
+                    <button onclick="copyToClipboard('UQAk0ygEIDAdflY2pUuNAgw9aWv_EqRLRkXZGAmm2qthS1Nv', 'Адрес TON')" class="mc-btn mc-btn-gray w-full py-1.5 pixel-font text-base uppercase">
+                        Скопировать адрес
+                    </button>
+                </div>
+
+                <!-- Кнопка вызова инструкции -->
+                <button onclick="toggleDonateInstruction()" class="mc-btn mc-btn-amber w-full py-2 pixel-font text-lg uppercase">
+                    Мини-инструкция
+                </button>
+
+                <!-- Блок инструкции -->
+                <div id="donate-instruction" class="hidden bg-[#0f0f0f] border-2 border-[#333] p-3 rounded space-y-2 text-gray-400 leading-relaxed">
+                    <p class="pixel-font text-base text-amber-400 uppercase">Как отправить донат за 2 минуты (с любой карты):</p>
+                    <ol class="list-decimal list-inside space-y-1 text-[11px]">
+                        <li>Скопируйте адрес кошелька выше (USDT или TON).</li>
+                        <li>Перейдите в Telegram-бота @wallet или на сайт BestChange.</li>
+                        <li>Выберите направление: Ваш банк (Сбер, T-Банк, СБП) -&gt; USDT TRC20 (или TON).</li>
+                        <li>Вставьте скопированный адрес в поле получателя и подтвердите перевод.</li>
+                    </ol>
+                </div>
+
+                <!-- YouTube-канал автора -->
+                <div class="bg-[#151515] border-2 border-[#333] p-3 rounded space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="pixel-font text-lg text-red-400 uppercase">YouTube-канал автора</span>
+                    </div>
+                    <div class="bg-[#0a0a0a] border border-[#262626] p-2 text-[11px] text-gray-200 break-all select-all font-mono">
+                        www.youtube.com/@koton_mc
+                    </div>
+                    <a href="https://www.youtube.com/@koton_mc" target="_blank" class="mc-btn mc-btn-red w-full py-1.5 pixel-font text-base uppercase text-center no-underline block">
+                        Открыть YouTube
+                    </a>
+                </div>
+            </div>
+
+            <div class="pt-4 mt-4 border-t-4 border-[#121212] flex justify-end shrink-0 select-none">
+                <button onclick="closeDonateModal()" class="mc-btn mc-btn-gray px-6 py-2 pixel-font text-xl uppercase">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Контейнер для тост-сообщений -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none select-none"></div>
+
+    <script>
+        const apiKey = "";
+
+        let currentProjectData = {};
+        let currentEditingPath = null;
+        let currentNamespace = 'custom_pack';
+        let currentInstructionText = '';
+
+        // DOM элементы
+        const promptInput = document.getElementById('prompt-input');
+        const namespaceInput = document.getElementById('namespace-input');
+        const packDescInput = document.getElementById('pack-desc-input');
+        const generateBtn = document.getElementById('generate-btn');
+        const fileTreeEl = document.getElementById('file-tree');
+        const codeEditor = document.getElementById('code-editor');
+        const editorPlaceholder = document.getElementById('editor-placeholder');
+        const currentFilePathEl = document.getElementById('current-file-path');
+        const exportBtn = document.getElementById('export-btn');
+        const checkBtn = document.getElementById('check-btn');
+        const instructionBtn = document.getElementById('instruction-btn');
+        const loadingScreen = document.getElementById('loading-screen');
+        const loadingText = document.getElementById('loading-text');
+        const loadingSubtext = document.getElementById('loading-subtext');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const toastContainer = document.getElementById('toast-container');
+        const resetProjectBtn = document.getElementById('reset-project-btn');
+        const terminalLogs = document.getElementById('terminal-logs');
+        const autosaveBadge = document.getElementById('autosave-badge');
+        
+        const randomIdeaBtn = document.getElementById('random-idea-btn');
+        const ideaModal = document.getElementById('idea-modal');
+        const ideasList = document.getElementById('ideas-list');
+        const applyIdeasBtn = document.getElementById('apply-ideas-btn');
+        const guideModal = document.getElementById('guide-modal');
+        const guideContent = document.getElementById('guide-content');
+
+        const correctionPanel = document.getElementById('correction-panel');
+        const correctionInput = document.getElementById('correction-input');
+        const refineBtn = document.getElementById('refine-btn');
+        const settingsDetails = document.getElementById('settings-details');
+        const engineStatusText = document.getElementById('ai-status-text');
+        const enginePing = document.getElementById('engine-ping');
+        const engineDot = document.getElementById('engine-dot');
+
+        const icons = {
+            folder: '<i class="fa-solid fa-folder text-gray-400 mr-2 shrink-0"></i>',
+            folderOpen: '<i class="fa-solid fa-folder-open text-gray-300 mr-2 shrink-0"></i>',
+            file: '<i class="fa-regular fa-file text-gray-500 mr-2 shrink-0"></i>',
+            json: '<i class="fa-solid fa-brackets-curly text-blue-400 mr-2 shrink-0"></i>',
+            mcfunction: '<i class="fa-solid fa-terminal text-green-400 mr-2 shrink-0"></i>',
+            mcmeta: '<i class="fa-solid fa-gear text-gray-400 mr-2 shrink-0"></i>'
+        };
+
+        function setEngineErrorState() {
+            engineStatusText.textContent = "Ошибка API (401)";
+            engineStatusText.className = "pixel-font text-lg text-red-400 drop-shadow-[1px_1px_0px_#111] uppercase";
+            enginePing.classList.remove('bg-emerald-400');
+            enginePing.classList.add('bg-red-400');
+            engineDot.classList.remove('bg-emerald-500');
+            engineDot.classList.add('bg-red-500');
+            
+            settingsDetails.setAttribute('open', 'true');
+            apiKeyInput.classList.add('error-glow');
+            setTimeout(() => apiKeyInput.classList.remove('error-glow'), 3000);
+            
+            showToast('Требуется API ключ. Открыты настройки.', 'error');
+        }
+
+        function logToTerminal(message, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            let styleClass = 'text-gray-400';
+            let prefix = '[INFO]';
+
+            if (type === 'error') {
+                styleClass = 'text-[#ff5555] font-semibold';
+                prefix = '[ERROR]';
+            } else if (type === 'warn') {
+                styleClass = 'text-[#ffaa00]';
+                prefix = '[WARN]';
+            } else if (type === 'success') {
+                styleClass = 'text-[#55ff55] font-medium';
+                prefix = '[SUCCESS]';
+            } else if (type === 'audit') {
+                styleClass = 'text-[#55ffff]';
+                prefix = '[AUDIT]';
+            }
+
+            const logLine = document.createElement('div');
+            logLine.className = `${styleClass} leading-relaxed break-all`;
+            logLine.innerHTML = `<span class="text-gray-600 font-normal">[${time}] ${prefix}</span> ${message}`;
+            
+            terminalLogs.appendChild(logLine);
+            terminalLogs.scrollTop = terminalLogs.scrollHeight;
+        }
+
+        function clearTerminal() {
+            terminalLogs.innerHTML = `<div class="text-gray-500">[System] Консоль очищена.</div>`;
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `p-3 mc-panel flex items-center gap-3 text-xs font-semibold text-gray-200 pointer-events-auto max-w-sm transition-all duration-300`;
+            
+            let icon = '<i class="fa-solid fa-circle-info text-gray-400 text-sm"></i>';
+            if (type === 'success') {
+                toast.classList.add('border-emerald-600/50');
+                icon = '<i class="fa-solid fa-check text-emerald-400 text-sm"></i>';
+            } else if (type === 'error') {
+                toast.classList.add('border-red-600/50');
+                icon = '<i class="fa-solid fa-xmark text-red-400 text-sm"></i>';
+            }
+
+            toast.innerHTML = `${icon} <span class="flex-1 font-mono">${message}</span>`;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        async function sendEngineRequest(payload) {
+            const customKey = apiKeyInput.value.trim() || localStorage.getItem('gemini_user_api_key') || '';
+            
+            if (!customKey) {
+                setEngineErrorState();
+                throw new Error("API-ключ не указан! Вставьте свой ключ Google Gemini в настройках.");
+            }
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${customKey}`;
+
+            let attempts = 3;
+
+            for (let i = 0; i < attempts; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 401) {
+                        setEngineErrorState();
+                        throw new Error("401 Unauthorized. Неверный API-ключ.");
+                    }
+
+                    if (!response.ok) {
+                        const errBody = await response.text();
+                        throw new Error(`Ошибка сервера (${response.status}): ${errBody}`);
+                    }
+
+                    const json = await response.json();
+                    const candidateText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!candidateText) throw new Error("Пустой ответ движка.");
+
+                    return JSON.parse(candidateText.trim());
+
+                } catch (err) {
+                    if (i === attempts - 1 || err.message.includes("401")) throw err;
+                    await new Promise(res => setTimeout(res, 2000));
+                }
+            }
+        }
+
+        if (apiKeyInput) {
+            const saved = localStorage.getItem('gemini_user_api_key');
+            if (saved) apiKeyInput.value = saved;
+            apiKeyInput.addEventListener('input', () => {
+                localStorage.setItem('gemini_user_api_key', apiKeyInput.value.trim());
+            });
+        }
+
+        async function generateInstructionText(files, contextPrompt) {
+            const systemPrompt = `Вы — технический писатель Minecraft. Составьте понятную, четкую и подробную текстовую инструкцию по установке и использованию сгенерированного датапака.
+Инструкция должна содержать:
+1. Краткий обзор добавленого функционала.
+2. Инструкцию по установке датапака в мир Minecraft.
+3. Команды для получения предметов / запуска функций в игре.
+4. Описание работы механик и как ими пользоваться.
+
+Не используйте смайлики и эмодзи. Верните JSON с единственным ключом "instruction", содержащим полный текст инструкции.`;
+
+            const prompt = `Контекст датапака:\n${contextPrompt}\n\nФайлы датапака:\n${JSON.stringify(files, null, 2)}`;
+
+            const result = await sendEngineRequest({
+                contents: [{ parts: [{ text: `${systemPrompt}\n\n${prompt}` }] }],
+                generationConfig: { response_mime_type: "application/json" }
+            });
+
+            return result.instruction || "Инструкция не сгенерирована.";
+        }
+
+        generateBtn.addEventListener('click', async () => {
+            const prompt = promptInput.value.trim();
+            if (!prompt) {
+                showToast('Конфигурация логики пуста.', 'error');
+                return;
+            }
+            
+            currentNamespace = namespaceInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_') || 'custom_pack';
+            const packDesc = packDescInput.value.trim() || 'Datapack generated Datapack Studio';
+            
+            loadingScreen.classList.remove('hidden');
+            loadingScreen.style.display = 'flex';
+            loadingText.textContent = "Компиляция...";
+            loadingSubtext.textContent = "Генерация структуры файлов и проверка синтаксиса";
+
+            logToTerminal(`Запуск генерации датапака [${currentNamespace}]...`);
+
+            const systemPrompt = `Вы — профессиональный генератор датапаков Minecraft Java Edition 1.21 (pack_format: 48).
+Сгенерируйте полную структуру датапака в виде СТРОГОГО JSON-объекта без каких-либо оберток markdown или текста вне JSON.
+Ключами объекта должны быть пути к файлам относительно корня датапака. Значениями — текстовое содержимое файлов.
+
+ОБЯЗАТЕЛЬНЫЕ ФАЙЛЫ:
+1. pack.mcmeta (формат 48)
+2. data/minecraft/tags/function/load.json (значение: ["${currentNamespace}:load"])
+3. data/minecraft/tags/function/tick.json (значение: ["${currentNamespace}:tick"])
+4. data/${currentNamespace}/function/load.mcfunction
+5. data/${currentNamespace}/function/tick.mcfunction
+
+ПРАВИЛА ДЛЯ СИНТАКСИСА 1.21:
+- Файлы должны содержать правильный синтаксис Minecraft 1.21.
+- Использовать UTF-8.
+- Не используйте слэш '/' в начале команд mcfunction.
+- Имена пространств имён строго '${currentNamespace}'.
+- Возвращайте ТОЛЬКО чистый JSON вида {"filepath": "content"}.`;
+
+            try {
+                const result = await sendEngineRequest({
+                    contents: [{
+                        parts: [{
+                            text: `${systemPrompt}\n\nОписание датапака: ${packDesc}\nТехническое задание: ${prompt}`
+                        }]
+                    }],
+                    generationConfig: {
+                        response_mime_type: "application/json"
+                    }
+                });
+
+                currentProjectData = result;
+                logToTerminal("Датапак успешно скомпилирован!", "success");
+
+                loadingSubtext.textContent = "Формирование инструкции к датапаку...";
+                try {
+                    currentInstructionText = await generateInstructionText(currentProjectData, prompt);
+                    logToTerminal("Инструкция к датапаку сгенерирована.", "info");
+                } catch (instErr) {
+                    currentInstructionText = "Не удалось сгенерировать подробную инструкцию.\n\nОсновная команда перезапуска датапака в игре: /reload";
+                    logToTerminal("Ошибка генерации инструкции: " + instErr.message, "warn");
+                }
+
+                showToast("Датапак успешно скомпилирован", "success");
+
+                renderFileTree();
+                enableEditorControls();
+                correctionPanel.classList.remove('hidden');
+                resetProjectBtn.classList.remove('hidden');
+
+                // Автоматически открыть главный tick файл
+                const tickPath = `data/${currentNamespace}/function/tick.mcfunction`;
+                if (currentProjectData[tickPath]) {
+                    selectFile(tickPath);
+                } else {
+                    const firstFile = Object.keys(currentProjectData)[0];
+                    if (firstFile) selectFile(firstFile);
+                }
+
+                // Показываем окно доната через 1.5 секунды
+                setTimeout(() => {
+                    openDonateModal(true);
+                }, 1500);
+
+            } catch (err) {
+                logToTerminal(`Ошибка генерации: ${err.message}`, "error");
+                showToast(err.message, "error");
+            } finally {
+                loadingScreen.classList.add('hidden');
+                loadingScreen.style.display = 'none';
+            }
+        });
+
+        // Функция доработки проекта
+        refineBtn.addEventListener('click', async () => {
+            const correction = correctionInput.value.trim();
+            if (!correction) {
+                showToast("Укажите, что требуется изменить.", "warn");
+                return;
+            }
+
+            loadingScreen.classList.remove('hidden');
+            loadingScreen.style.display = 'flex';
+            loadingText.textContent = "Внесение правок...";
+            loadingSubtext.textContent = "Анализ изменений и пересборка функций";
+
+            logToTerminal("Запуск процесса отладки и внедрения изменений...");
+
+            const prompt = `У нас есть существующий датапак Minecraft 1.21 (pack_format: 48) со следующим набором файлов:\n${JSON.stringify(currentProjectData, null, 2)}\n\nТребуется внести следующие изменения/исправления:\n${correction}\n\nВерните обновленный СТРОГИЙ JSON со всеми файлами датапака без стороннего текста.`;
+
+            try {
+                const updatedFiles = await sendEngineRequest({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { response_mime_type: "application/json" }
+                });
+
+                currentProjectData = updatedFiles;
+                logToTerminal("Правки успешно применены!", "success");
+
+                loadingSubtext.textContent = "Обновление инструкции к датапаку...";
+                try {
+                    currentInstructionText = await generateInstructionText(currentProjectData, `Исходное ТЗ: ${promptInput.value}\nВнесенные правки: ${correction}`);
+                    logToTerminal("Инструкция к датапаку успешно обновлена.", "info");
+                } catch (instErr) {
+                    logToTerminal("Ошибка обновления инструкции: " + instErr.message, "warn");
+                }
+
+                showToast("Проект обновлен", "success");
+
+                renderFileTree();
+                if (currentEditingPath && currentProjectData[currentEditingPath]) {
+                    codeEditor.value = currentProjectData[currentEditingPath];
+                }
+                correctionInput.value = "";
+            } catch (err) {
+                logToTerminal(`Ошибка при внесении правок: ${err.message}`, "error");
+                showToast(err.message, "error");
+            } finally {
+                loadingScreen.classList.add('hidden');
+                loadingScreen.style.display = 'none';
+            }
+        });
+
+        // Генерация идей
+        randomIdeaBtn.addEventListener('click', async () => {
+            loadingScreen.classList.remove('hidden');
+            loadingScreen.style.display = 'flex';
+            loadingText.textContent = "Поиск идей...";
+            loadingSubtext.textContent = "Подбор интересных механик ";
+
+            try {
+                const response = await sendEngineRequest({
+                    contents: [{
+                        parts: [{
+                            text: `Сгенерируйте 5 креативных, интересных и технически выполнимых идей для датапаков Minecraft Java 1.21.
+Верните JSON-массив строк без каких-либо метаданных или markdown.
+Пример: ["Кастомные зелья с эффектами гравитации при питье", "Зачарование для кирки, взрывающее руду в радиусе 3 блоков"]`
+                        }]
+                    }],
+                    generationConfig: { response_mime_type: "application/json" }
+                });
+
+                ideasList.innerHTML = "";
+                response.forEach((ideaText, idx) => {
+                    const item = document.createElement('div');
+                    item.className = "p-3 bg-[#181818] border-2 border-[#333] hover:border-amber-500 rounded cursor-pointer transition flex items-start gap-3";
+                    item.innerHTML = `
+                        <input type="checkbox" name="selected_idea" id="idea_${idx}" value="${ideaText.replace(/"/g, '&quot;')}" class="mt-1 accent-amber-500 cursor-pointer w-4 h-4">
+                        <label for="idea_${idx}" class="text-xs text-gray-200 cursor-pointer flex-1 leading-relaxed select-none">${ideaText}</label>
+                    `;
+                    ideasList.appendChild(item);
+                });
+
+                ideaModal.classList.remove('hidden');
+            } catch (err) {
+                logToTerminal(`Ошибка генерации идей: ${err.message}`, "error");
+                showToast(err.message, "error");
+            } finally {
+                loadingScreen.classList.add('hidden');
+                loadingScreen.style.display = 'none';
+            }
+        });
+
+        applyIdeasBtn.addEventListener('click', () => {
+            const checkedBoxes = document.querySelectorAll('input[name="selected_idea"]:checked');
+            if (checkedBoxes.length > 0) {
+                const selectedIdeas = Array.from(checkedBoxes).map(cb => cb.value);
+                const formattedIdeas = selectedIdeas.map(idea => `- ${idea}`).join('\n');
+                
+                if (promptInput.value.trim() !== '') {
+                    promptInput.value += '\n' + formattedIdeas;
+                } else {
+                    promptInput.value = formattedIdeas;
+                }
+                
+                closeIdeaModal();
+                showToast(`Добавлено идей: ${selectedIdeas.length}`, "success");
+            } else {
+                showToast("Выберите хотя бы одну идею", "warn");
+            }
+        });
+
+        function closeIdeaModal() {
+            ideaModal.classList.add('hidden');
+        }
+
+        instructionBtn.addEventListener('click', () => {
+            if (!Object.keys(currentProjectData).length) return;
+            guideContent.textContent = currentInstructionText || "Инструкция отсутствует.";
+            guideModal.classList.remove('hidden');
+        });
+
+        // Вызов и работа с аудитом кода
+        checkBtn.addEventListener('click', async () => {
+            if (!Object.keys(currentProjectData).length) return;
+
+            loadingScreen.classList.remove('hidden');
+            loadingScreen.style.display = 'flex';
+            loadingText.textContent = "Анализ кода...";
+            loadingSubtext.textContent = "Проверка команд на совместимость с 1.21";
+
+            logToTerminal("Запуск линтера и статического анализатора...", "audit");
+
+            const prompt = `Проведите подробный аудит синтаксиса следующего датапака Minecraft 1.21:\n${JSON.stringify(currentProjectData, null, 2)}
+
+Верните JSON с объектом структуры:
+{
+  "status": "OK" или "WARNINGS" или "ERRORS",
+  "reportText": "Краткий общий вывод",
+  "errors": ["список обнаруженных синтаксических ошибок или предупреждений"],
+  "fixedFiles": {"filepath": "исправленное содержимое, если были ошибки"} (если ошибок нет, оставьте оригинальные файлы)
+}`;
+
+            try {
+                const auditResult = await sendEngineRequest({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { response_mime_type: "application/json" }
+                });
+
+                document.getElementById('audit-report-text').textContent = auditResult.reportText || "Анализ завершен.";
+                
+                const errorsList = document.getElementById('audit-errors-list');
+                errorsList.innerHTML = "";
+                (auditResult.errors || []).forEach(err => {
+                    const li = document.createElement('li');
+                    li.textContent = err;
+                    errorsList.appendChild(li);
+                });
+
+                const fixesList = document.getElementById('audit-fixes-list');
+                fixesList.innerHTML = "";
+                if (auditResult.fixedFiles) {
+                    Object.keys(auditResult.fixedFiles).forEach(file => {
+                        const li = document.createElement('li');
+                        li.textContent = `Обновлен файл: ${file}`;
+                        fixesList.appendChild(li);
+                    });
+                    currentProjectData = { ...currentProjectData, ...auditResult.fixedFiles };
+                    renderFileTree();
+                    if (currentEditingPath && currentProjectData[currentEditingPath]) {
+                        codeEditor.value = currentProjectData[currentEditingPath];
+                    }
+                }
+
+                const banner = document.getElementById('audit-status-banner');
+                const title = document.getElementById('audit-status-title');
+
+                if (auditResult.status === 'OK') {
+                    banner.className = "p-3 border-4 border-emerald-900 bg-[#0f2415] rounded text-center select-none";
+                    title.className = "pixel-font text-2xl text-emerald-400 uppercase font-bold drop-shadow-[1px_1px_0px_#111]";
+                    title.textContent = "Ошибок не обнаружено";
+                } else {
+                    banner.className = "p-3 border-4 border-amber-900 bg-[#291e0a] rounded text-center select-none";
+                    title.className = "pixel-font text-2xl text-amber-400 uppercase font-bold drop-shadow-[1px_1px_0px_#111]";
+                    title.textContent = "Обнаружены и исправлены замечания";
+                }
+
+                document.getElementById('audit-modal').classList.remove('hidden');
+                logToTerminal("Анализ кода успешно завершен.", "success");
+
+            } catch (err) {
+                logToTerminal(`Ошибка во время анализа: ${err.message}`, "error");
+                showToast(err.message, "error");
+            } finally {
+                loadingScreen.classList.add('hidden');
+                loadingScreen.style.display = 'none';
+            }
+        });
+
+        function closeAuditModal() {
+            document.getElementById('audit-modal').classList.add('hidden');
+        }
+
+        // Отрисовка файлового дерева
+        function renderFileTree() {
+            fileTreeEl.innerHTML = "";
+            const filePaths = Object.keys(currentProjectData).sort();
+
+            if (filePaths.length === 0) {
+                fileTreeEl.innerHTML = `<p class="text-gray-500 italic p-4 text-center pixel-font text-lg leading-relaxed select-none">Проект пуст. Запустите генерацию.</p>`;
+                return;
+            }
+
+            filePaths.forEach(path => {
+                const item = document.createElement('div');
+                item.className = `p-2 hover:bg-[#2a2a2a] rounded cursor-pointer transition flex items-center text-xs truncate ${currentEditingPath === path ? 'bg-[#333] text-white font-bold' : ''}`;
+                
+                let icon = icons.file;
+                if (path.endsWith('.json')) icon = icons.json;
+                else if (path.endsWith('.mcfunction')) icon = icons.mcfunction;
+                else if (path.endsWith('.mcmeta')) icon = icons.mcmeta;
+
+                item.innerHTML = `${icon} <span class="truncate" title="${path}">${path}</span>`;
+                item.addEventListener('click', () => selectFile(path));
+                fileTreeEl.appendChild(item);
+            });
+        }
+
+        function selectFile(path) {
+            currentEditingPath = path;
+            renderFileTree();
+
+            editorPlaceholder.classList.add('hidden');
+            codeEditor.classList.remove('hidden');
+            codeEditor.value = currentProjectData[path] || "";
+            currentFilePathEl.textContent = path;
+        }
+
+        codeEditor.addEventListener('input', () => {
+            if (currentEditingPath) {
+                currentProjectData[currentEditingPath] = codeEditor.value;
+                autosaveBadge.classList.remove('hidden');
+                setTimeout(() => autosaveBadge.classList.add('hidden'), 2000);
+            }
+        });
+
+        function enableEditorControls() {
+            instructionBtn.removeAttribute('disabled');
+            exportBtn.removeAttribute('disabled');
+            checkBtn.removeAttribute('disabled');
+        }
+
+        // Экспорт в ZIP
+        exportBtn.addEventListener('click', async () => {
+            if (!Object.keys(currentProjectData).length) return;
+
+            const zip = new JSZip();
+            Object.keys(currentProjectData).forEach(path => {
+                zip.file(path, currentProjectData[path]);
+            });
+
+            logToTerminal("Упаковка проекта в .ZIP архив...");
+            const blob = await zip.generateAsync({ type: "blob" });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentNamespace}_1.21.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            logToTerminal(`Архив ${currentNamespace}_1.21.zip скачан!`, "success");
+            showToast("Архив датапака загружен", "success");
+        });
+
+        // Сброс проекта
+        resetProjectBtn.addEventListener('click', () => {
+            currentProjectData = {};
+            currentEditingPath = null;
+            currentInstructionText = '';
+            renderFileTree();
+            codeEditor.classList.add('hidden');
+            editorPlaceholder.classList.remove('hidden');
+            currentFilePathEl.textContent = "Рабочая область не инициализирована";
+            instructionBtn.setAttribute('disabled', 'true');
+            exportBtn.setAttribute('disabled', 'true');
+            checkBtn.setAttribute('disabled', 'true');
+            correctionPanel.classList.add('hidden');
+            resetProjectBtn.classList.add('hidden');
+            logToTerminal("Рабочая область очищена.");
+            showToast("Проект сброшен", "info");
+        });
+
+        // Донат Модальное окно
+        function openDonateModal(isAfterDownload = false) {
+            const modal = document.getElementById('donate-modal');
+            const title = document.getElementById('donate-title');
+            const desc = document.getElementById('donate-desc');
+
+            if (isAfterDownload) {
+                title.textContent = "Датапак скомпилирован!";
+                desc.textContent = "Если инструмент сэкономил вам время, вы можете поддержать развитие проекта и автора любым удобным способом ниже:";
+            } else {
+                title.textContent = "Поддержать проект";
+                desc.textContent = "Проект развивается бесплатно. Если генератор сэкономил время и помог создать датапак, вы можете поддержать автора.";
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeDonateModal() {
+            document.getElementById('donate-modal').classList.add('hidden');
+        }
+
+        function toggleDonateInstruction() {
+            const inst = document.getElementById('donate-instruction');
+            inst.classList.toggle('hidden');
+        }
+
+        function copyToClipboard(text, label) {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast(`${label} скопирован!`, "success");
+        }
+
+        function closeGuideModal() {
+            guideModal.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
